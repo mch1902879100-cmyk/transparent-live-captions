@@ -608,6 +608,17 @@ $timer.Interval = [TimeSpan]::FromMilliseconds(350)
 $timer.Add_Tick({
     if ($script:isAdjusting) { return }
     $now = [DateTime]::UtcNow
+    if (-not $QaDemo) {
+        $liveCaptionsRunning = $null -ne ([System.Diagnostics.Process]::GetProcessesByName('LiveCaptions') | Select-Object -First 1)
+        if (-not $liveCaptionsRunning) {
+            $script:preparedHandle = [IntPtr]::Zero
+            $script:lastRaw = ''
+            $last = ''
+            $caption.Text = ''
+            $window.Visibility = [System.Windows.Visibility]::Hidden
+            return
+        }
+    }
     if ($now -ge $script:nextMediaRefresh) {
         Update-MediaSessionDisplay
         $script:nextMediaRefresh = $now.AddMilliseconds(650)
@@ -683,11 +694,23 @@ $window.Add_Closed({
     if (-not $QaDemo) { Restore-LiveCaptions }
     $mutex.ReleaseMutex()
     $mutex.Dispose()
+    [System.Windows.Threading.Dispatcher]::CurrentDispatcher.InvokeShutdown()
 })
 $timer.Start()
 $guardTimer = New-Object System.Windows.Threading.DispatcherTimer
 $guardTimer.Interval = [TimeSpan]::FromMilliseconds(50)
 $guardTimer.Add_Tick({
+    if (-not $QaDemo) {
+        $liveCaptionsRunning = $null -ne ([System.Diagnostics.Process]::GetProcessesByName('LiveCaptions') | Select-Object -First 1)
+        if (-not $liveCaptionsRunning) {
+            $script:preparedHandle = [IntPtr]::Zero
+            $script:lastRaw = ''
+            $last = ''
+            $caption.Text = ''
+            $window.Visibility = [System.Windows.Visibility]::Hidden
+            return
+        }
+    }
     if ($script:preparedHandle -and $script:preparedHandle -ne [IntPtr]::Zero) {
         [LyricsNative]::SetWindowPos($script:preparedHandle, [IntPtr]::Zero, -32000, -32000, 0, 0, 0x0015) | Out-Null
     }
