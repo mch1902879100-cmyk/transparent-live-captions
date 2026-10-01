@@ -1,0 +1,21 @@
+.venv/
+**/bin/
+**/obj/
+__pycache__/
+*.pyc
+*.pdb
+*.log
+*.bak
+.ai/runtime/
+release/
+dist/
+*.zip
+# Runtime/private data must live outside the repo
+config.json
+runtime.json
+request.json
+response.json
+current.json
+models/
+
+build-release/
